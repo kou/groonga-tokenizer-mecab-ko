@@ -1,0 +1,89 @@
+# Copyright (C) 2026  Sutou Kouhei <kou@clear-code.com>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+name: Test
+on:
+  push:
+    branches:
+      - "**"
+      - "!dependabot/**"
+    tags:
+      - "**"
+  pull_request:
+concurrency:
+  group: ${{ github.head_ref || github.sha }}-${{ github.workflow }}
+  cancel-in-progress: true
+jobs:
+  ubuntu:
+    name: Ubuntu
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Cache ccache
+        uses: actions/cache@v5
+        with:
+          path: cache
+          key: test-ubuntu-ccache-${{ hashFiles('tokenizers/**') }}
+          restore-keys: cmake-ubuntu-ccache-
+      - name: Install build dependencies
+        run: |
+          sudo apt install -y -V \
+            build-essential \
+            ccache \
+            cmake \
+            ninja-build
+      - name: Install Groonga
+        run: |
+          sudo apt install -y -V ca-certificates lsb-release wget
+          wget https://packages.groonga.org/ubuntu/groonga-apt-source-latest-$(lsb_release --codename --short).deb
+          sudo apt install -y -V \
+            ./groonga-apt-source-latest-$(lsb_release --codename --short).deb
+          sudo apt update
+          sudo apt install -y -V \
+            libgroonga-dev
+      - name: Install mecab-ko
+        run: |
+          git clone --depth 1 https://bitbucket.org/eunjeon/mecab-ko.git
+          mkdir -p mecab-ko.build
+          cd mecab-ko.build
+          ../mecab-ko/configure --prefix=/usr
+          make -j$(nproc) > /dev/null
+          sudo make install
+      - name: Install mecab-ko-dic
+        run: |
+          git clone --depth 1 https://bitbucket.org/eunjeon/mecab-ko-dic.git
+          cd mecab-ko-dic
+          ./autogen.sh
+          ./configure --prefix=/usr
+          make -j$(nproc) > /dev/null
+          sudo make install
+      - name: CMake
+        run: |
+          cmake -S . -B build -GNinja
+      - name: Build
+        run: |
+          cmake --build build
+      - name: Install
+        run: |
+          sudo cmake --install build
+      - name: Install grntest
+        run: |
+          sudo gem install grntest
+      - name: Test
+        run: |
+          cd build
+          ../test/run.sh

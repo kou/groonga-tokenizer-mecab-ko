@@ -1,0 +1,3 @@
+plugin_register tokenizers/mecab_ko
+
+tokenize TokenMeCabKo '안녕하세요'

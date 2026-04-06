@@ -1,0 +1,18 @@
+plugin_register tokenizers/mecab_ko
+[[0,0.0,0.0],true]
+tokenize TokenMeCabKo '안녕하세요'
+[
+  [
+    0,
+    0.0,
+    0.0
+  ],
+  [
+    {
+      "value": "안녕하세요",
+      "position": 0,
+      "force_prefix": false,
+      "force_prefix_search": false
+    }
+  ]
+]
