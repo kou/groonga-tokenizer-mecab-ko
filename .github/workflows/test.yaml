@@ -54,7 +54,8 @@ jobs:
             ./groonga-apt-source-latest-$(lsb_release --codename --short).deb
           sudo apt update
           sudo apt install -y -V \
-            libgroonga-dev
+            libgroonga-dev \
+            groonga
       - name: Install mecab-ko
         run: |
           git clone --depth 1 https://bitbucket.org/eunjeon/mecab-ko.git
@@ -65,8 +66,12 @@ jobs:
           sudo make install
       - name: Install mecab-ko-dic
         run: |
-          git clone --depth 1 https://bitbucket.org/eunjeon/mecab-ko-dic.git
-          cd mecab-ko-dic
+          wget \
+            --no-verbose \
+            --output-document mecab-ko-dic.tar.gz \
+            "https://drive.usercontent.google.com/download?id=1rzCAlJ6YvJBAX9aRcIJjF7DCTD6UyEcZ&export=download&confirm=t"
+          tar xf mecab-ko-dic.tar.gz
+          cd mecab-ko-dic-*
           ./autogen.sh
           ./configure --prefix=/usr
           make -j$(nproc) > /dev/null
@@ -80,10 +85,13 @@ jobs:
       - name: Install
         run: |
           sudo cmake --install build
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "ruby"
       - name: Install grntest
         run: |
-          sudo gem install grntest
+          gem install grntest
       - name: Test
         run: |
           cd build
-          ../test/run.sh
+          BUILD_DIR=${PWD} ../test/run.sh

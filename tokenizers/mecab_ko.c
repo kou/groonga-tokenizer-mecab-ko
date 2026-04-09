@@ -480,7 +480,7 @@ mecab_ko_model_create(grn_ctx *ctx, grn_mecab_ko_tokenizer_options *options)
 {
   mecab_model_t *mecab_model;
   int argc = 0;
-  const char *argv[5];
+  const char *argv[3];
   const char *tag;
 
   bool need_default_output =
@@ -498,6 +498,7 @@ mecab_ko_model_create(grn_ctx *ctx, grn_mecab_ko_tokenizer_options *options)
     argv[argc++] = "-E\n";
   }
 
+  mecab_model = mecab_model_new(argc, (char **)argv);
   if (!mecab_model) {
     if (need_default_output) {
       GRN_PLUGIN_ERROR(ctx,
@@ -513,11 +514,12 @@ mecab_ko_model_create(grn_ctx *ctx, grn_mecab_ko_tokenizer_options *options)
                        GRN_TOKENIZER_ERROR,
                        "[tokenizer][mecab-ko][create]%s "
                        "failed to create mecab_model_t: %s: "
-                       "mecab_model_new(\"%s\", \"%s\")",
+                       "mecab_model_new(\"%s\", \"%s\", \"%s\")",
                        tag,
                        mecab_strerror(NULL),
                        argv[0],
-                       argv[1]);
+                       argv[1],
+                       argv[2]);
     }
   }
 
