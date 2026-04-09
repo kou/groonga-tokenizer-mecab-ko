@@ -75,6 +75,7 @@ if(DEFINED MECAB_KO_PRIVATE_PREFIX)
         INSTALL_COMMAND make install
         COMMAND ldconfig ${MECAB_KO_PRIVATE_PREFIX}/lib || true
         BUILD_IN_SOURCE FALSE
+        BUILD_BYPRODUCTS ${MECAB_KO_LIBRARY}
     )
 
     ExternalProject_Add(
