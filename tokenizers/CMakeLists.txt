@@ -28,6 +28,14 @@ target_include_directories(
 target_link_libraries(groonga_tokenizer_mecab_ko PRIVATE ${MECAB_KO_LIBRARY})
 if(DEFINED MECAB_KO_PRIVATE_PREFIX)
     add_dependencies(groonga_tokenizer_mecab_ko mecab_ko_dic_external)
+    target_compile_definitions(
+        groonga_tokenizer_mecab_ko
+        PRIVATE
+            GRN_WITH_BUNDLED_MECAB_KO
+            GRN_BUNDLED_MECAB_KO_RC_PATH="${MECAB_KO_RC_PATH}"
+    )
+    find_package(Threads REQUIRED)
+    target_link_libraries(groonga_tokenizer_mecab_ko PRIVATE Threads::Threads)
 endif()
 install(
     TARGETS groonga_tokenizer_mecab_ko

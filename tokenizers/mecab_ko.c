@@ -480,7 +480,7 @@ mecab_ko_model_create(grn_ctx *ctx, grn_mecab_ko_tokenizer_options *options)
 {
   mecab_model_t *mecab_model;
   int argc = 0;
-  const char *argv[3];
+  const char *argv[5];
   const char *tag;
 
   bool need_default_output =
@@ -497,6 +497,10 @@ mecab_ko_model_create(grn_ctx *ctx, grn_mecab_ko_tokenizer_options *options)
     argv[argc++] = "-F%m\n";
     argv[argc++] = "-E\n";
   }
+#ifdef GRN_WITH_BUNDLED_MECAB_KO
+  argv[argc++] = "--rcfile";
+  argv[argc++] = GRN_BUNDLED_MECAB_KO_RC_PATH;
+#endif
 
   mecab_model = mecab_model_new(argc, (char **)argv);
   if (!mecab_model) {

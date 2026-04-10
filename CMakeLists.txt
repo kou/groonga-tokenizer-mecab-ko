@@ -43,25 +43,20 @@ endif()
 
 find_package(Groonga REQUIRED)
 
-include(ProcessorCount)
-ProcessorCount(NPROC)
-if(NPROC EQUAL 0)
-    set(NPROC 1)
-endif()
-
 if(DEFINED MECAB_KO_PRIVATE_PREFIX)
     include(ExternalProject)
+    include(ProcessorCount)
+    ProcessorCount(NPROC)
+    if(NPROC EQUAL 0)
+        set(NPROC 1)
+    endif()
 
     set(MECAB_KO_INCLUDE_DIRS "${MECAB_KO_PRIVATE_PREFIX}/include")
-    if(APPLE)
-        set(MECAB_KO_LIBRARY "${MECAB_KO_PRIVATE_PREFIX}/lib/libmecab.dylib")
-    elseif(WIN32)
-        set(MECAB_KO_LIBRARY "${MECAB_KO_PRIVATE_PREFIX}/lib/libmecab.dll")
-    else()
-        set(MECAB_KO_LIBRARY "${MECAB_KO_PRIVATE_PREFIX}/lib/libmecab.so")
-    endif()
-    set(CMAKE_INSTALL_RPATH "${MECAB_KO_PRIVATE_PREFIX}/lib")
-    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
+    set(MECAB_KO_LIBRARY "${MECAB_KO_PRIVATE_PREFIX}/lib/libmecab.a")
+    set(MECAB_KO_RC_PATH "${MECAB_KO_PRIVATE_PREFIX}/etc/mecabrc")
+    set(MECAB_KO_DIC_DIR
+        "${MECAB_KO_PRIVATE_PREFIX}/lib/mecab/dic/mecab-ko-dic"
+    )
 
     ExternalProject_Add(
         mecab_ko_external
@@ -70,10 +65,9 @@ if(DEFINED MECAB_KO_PRIVATE_PREFIX)
         PREFIX ${CMAKE_BINARY_DIR}/mecab-ko
         CONFIGURE_COMMAND
             <SOURCE_DIR>/configure --prefix=${MECAB_KO_PRIVATE_PREFIX}
-            --libdir=${MECAB_KO_PRIVATE_PREFIX}/lib --disable-static
+            --enable-static --disable-shared --with-pic
         BUILD_COMMAND make -j${NPROC}
         INSTALL_COMMAND make install
-        COMMAND ldconfig ${MECAB_KO_PRIVATE_PREFIX}/lib || true
         BUILD_IN_SOURCE FALSE
         BUILD_BYPRODUCTS ${MECAB_KO_LIBRARY}
     )
@@ -86,16 +80,14 @@ if(DEFINED MECAB_KO_PRIVATE_PREFIX)
         DEPENDS mecab_ko_external
         CONFIGURE_COMMAND
             sh -c
-            "cd <SOURCE_DIR> && ./autogen.sh && ./configure --prefix=${MECAB_KO_PRIVATE_PREFIX} --with-mecab-config=${MECAB_KO_PRIVATE_PREFIX}/bin/mecab-config --with-dicdir=${MECAB_KO_PRIVATE_PREFIX}/lib/mecab/dic/mecab-ko-dic"
+            "cd <SOURCE_DIR> && ./autogen.sh && ./configure --prefix=${MECAB_KO_PRIVATE_PREFIX} --with-mecab-config=${MECAB_KO_PRIVATE_PREFIX}/bin/mecab-config --with-dicdir=${MECAB_KO_DIC_DIR}"
         BUILD_COMMAND
             ${CMAKE_COMMAND} -E env
-            LD_LIBRARY_PATH=${MECAB_KO_PRIVATE_PREFIX}/lib
             PATH=${MECAB_KO_PRIVATE_PREFIX}/bin:$ENV{PATH} make -j${NPROC}
         INSTALL_COMMAND make install
         COMMAND
-            sed -i
-            "s|^dicdir.*|dicdir = ${MECAB_KO_PRIVATE_PREFIX}/lib/mecab/dic/mecab-ko-dic|"
-            ${MECAB_KO_PRIVATE_PREFIX}/etc/mecabrc
+            sed -i "s|^dicdir.*|dicdir = ${MECAB_KO_DIC_DIR}|"
+            ${MECAB_KO_RC_PATH}
         BUILD_IN_SOURCE TRUE
     )
 else()
